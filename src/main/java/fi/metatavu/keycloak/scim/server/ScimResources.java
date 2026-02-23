@@ -186,18 +186,21 @@ public class ScimResources {
     public Response listRealmGroups(
             @Context KeycloakSession session,
             @QueryParam("startIndex") @DefaultValue("0") int startIndex,
-            @QueryParam("count") @DefaultValue("100") int count
+            @QueryParam("count") @DefaultValue("100") int count,
+            @QueryParam("members") Boolean members
     ) {
         RealmScimContext scimContext = realmScimServer.getScimContext(session);
         realmScimServer.verifyPermissions(scimContext);
 
         boolean oneBasedIndex = scimContext.getConfig().getStartIndexBase() == 1;
         int effectiveStartIndex = (oneBasedIndex && startIndex > 0) ? startIndex - 1 : startIndex;
+        boolean includeMembers = members != Boolean.FALSE;
 
         Response response = realmScimServer.listGroups(
                 scimContext,
                 effectiveStartIndex,
-                count
+                count,
+                includeMembers
         );
 
         if (oneBasedIndex) {
@@ -518,18 +521,21 @@ public class ScimResources {
             @Context KeycloakSession session,
             @PathParam("organizationId") String organizationId,
             @QueryParam("startIndex") @DefaultValue("0") int startIndex,
-            @QueryParam("count") @DefaultValue("100") int count
+            @QueryParam("count") @DefaultValue("100") int count,
+            @QueryParam("members") Boolean members
     ) {
         OrganizationScimContext scimContext = organizationScimServer.getScimContext(session, organizationId);
         organizationScimServer.verifyPermissions(scimContext);
 
         boolean oneBasedIndex = scimContext.getConfig().getStartIndexBase() == 1;
         int effectiveStartIndex = (oneBasedIndex && startIndex > 0) ? startIndex - 1 : startIndex;
+        boolean includeMembers = members != Boolean.FALSE;
 
         Response response = organizationScimServer.listGroups(
             scimContext,
             effectiveStartIndex,
-            count
+            count,
+            includeMembers
         );
 
         if (oneBasedIndex) {

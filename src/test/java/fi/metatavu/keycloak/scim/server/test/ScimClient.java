@@ -1,5 +1,6 @@
 package fi.metatavu.keycloak.scim.server.test;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.metatavu.keycloak.scim.server.test.client.ApiClient;
 import fi.metatavu.keycloak.scim.server.test.client.ApiException;
 import fi.metatavu.keycloak.scim.server.test.client.api.GroupsApi;
@@ -7,7 +8,11 @@ import fi.metatavu.keycloak.scim.server.test.client.api.MetadataApi;
 import fi.metatavu.keycloak.scim.server.test.client.api.UsersApi;
 import fi.metatavu.keycloak.scim.server.test.client.model.*;
 
+import java.io.IOException;
 import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 
 /**
  * SCIM client
@@ -158,6 +163,45 @@ public class ScimClient {
     }
 
     /**
+     * Lists groups with members parameter
+     *
+     * @param filter filter
+     * @param startIndex start index
+     * @param count count
+     * @param members whether to include members
+     * @return groups list
+     * @throws ApiException thrown when API call fails
+     */
+    public GroupsList listGroups(String filter, Integer startIndex, Integer count, Boolean members) throws ApiException {
+        if (members == null) {
+            return listGroups(filter, startIndex, count);
+        }
+
+        StringBuilder uriBuilder = new StringBuilder(scimUri.toString());
+        uriBuilder.append("Groups?members=").append(members);
+        if (startIndex != null) uriBuilder.append("&startIndex=").append(startIndex);
+        if (count != null) uriBuilder.append("&count=").append(count);
+        if (filter != null) uriBuilder.append("&filter=").append(filter);
+
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(uriBuilder.toString()))
+            .header("Authorization", "Bearer " + accessToken)
+            .header("Accept", "application/scim+json")
+            .GET()
+            .build();
+
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() / 100 != 2) {
+                throw new ApiException("listGroups call failed with: " + response.statusCode() + " - " + response.body());
+            }
+            return new ObjectMapper().readValue(response.body(), GroupsList.class);
+        } catch (IOException | InterruptedException e) {
+            throw new ApiException(e);
+        }
+    }
+
+    /**
      * Creates a group
      *
      * @param group group to create
@@ -177,6 +221,18 @@ public class ScimClient {
      */
     public Group findGroup(String id) throws ApiException {
         return getGroupsApi().getGroup(id);
+    }
+
+    /**
+     * Patches a group
+     *
+     * @param id group ID
+     * @param patchRequest patch request
+     * @return patched group
+     * @throws ApiException thrown when API call fails
+     */
+    public Group patchGroup(String id, PatchRequest patchRequest) throws ApiException {
+        return getGroupsApi().patchGroup(id, patchRequest);
     }
 
     /**
