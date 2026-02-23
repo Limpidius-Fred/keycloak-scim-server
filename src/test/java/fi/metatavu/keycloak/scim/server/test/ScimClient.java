@@ -145,6 +145,19 @@ public class ScimClient {
     }
 
     /**
+     * Lists groups
+     *
+     * @param filter filter
+     * @param startIndex start index
+     * @param count count
+     * @return groups list
+     * @throws ApiException thrown when API call fails
+     */
+    public GroupsList listGroups(String filter, Integer startIndex, Integer count) throws ApiException {
+        return getGroupsApi().listGroups(filter, startIndex, count);
+    }
+
+    /**
      * Creates a group
      *
      * @param group group to create

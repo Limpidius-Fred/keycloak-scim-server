@@ -1,9 +1,12 @@
 package fi.metatavu.keycloak.scim.server;
 
+import fi.metatavu.keycloak.scim.server.config.ScimConfig;
 import fi.metatavu.keycloak.scim.server.consts.ContentTypes;
 import fi.metatavu.keycloak.scim.server.filter.ScimFilter;
 import fi.metatavu.keycloak.scim.server.filter.ScimFilterParser;
 import fi.metatavu.keycloak.scim.server.model.Group;
+import fi.metatavu.keycloak.scim.server.model.GroupsList;
+import fi.metatavu.keycloak.scim.server.model.UsersList;
 import fi.metatavu.keycloak.scim.server.organization.OrganizationScimContext;
 import fi.metatavu.keycloak.scim.server.organization.OrganizationScimServer;
 import fi.metatavu.keycloak.scim.server.realm.RealmScimContext;
@@ -62,6 +65,9 @@ public class ScimResources {
         RealmScimContext scimContext = realmScimServer.getScimContext(session);
         realmScimServer.verifyPermissions(scimContext);
 
+        boolean oneBasedIndex = scimContext.getConfig().getStartIndexBase() == 1;
+        int effectiveStartIndex = (oneBasedIndex && startIndex > 0) ? startIndex - 1 : startIndex;
+
         ScimFilter scimFilter;
         try {
             scimFilter = parseFilter(filter);
@@ -70,12 +76,18 @@ public class ScimResources {
             return Response.status(Response.Status.BAD_REQUEST).entity("Invalid filter").build();
         }
 
-        return realmScimServer.listUsers(
+        Response response = realmScimServer.listUsers(
             scimContext,
             scimFilter,
-            startIndex,
+            effectiveStartIndex,
             count
         );
+
+        if (oneBasedIndex) {
+            adjustUsersListStartIndex(response);
+        }
+
+        return response;
     }
 
     @GET
@@ -179,11 +191,20 @@ public class ScimResources {
         RealmScimContext scimContext = realmScimServer.getScimContext(session);
         realmScimServer.verifyPermissions(scimContext);
 
-        return realmScimServer.listGroups(
+        boolean oneBasedIndex = scimContext.getConfig().getStartIndexBase() == 1;
+        int effectiveStartIndex = (oneBasedIndex && startIndex > 0) ? startIndex - 1 : startIndex;
+
+        Response response = realmScimServer.listGroups(
                 scimContext,
-                startIndex,
+                effectiveStartIndex,
                 count
         );
+
+        if (oneBasedIndex) {
+            adjustGroupsListStartIndex(response);
+        }
+
+        return response;
     }
 
     @GET
@@ -370,6 +391,9 @@ public class ScimResources {
         OrganizationScimContext scimContext = organizationScimServer.getScimContext(session, organizationId);
         organizationScimServer.verifyPermissions(scimContext);
 
+        boolean oneBasedIndex = scimContext.getConfig().getStartIndexBase() == 1;
+        int effectiveStartIndex = (oneBasedIndex && startIndex > 0) ? startIndex - 1 : startIndex;
+
         ScimFilter scimFilter;
         try {
             scimFilter = parseFilter(filter);
@@ -378,12 +402,18 @@ public class ScimResources {
             return Response.status(Response.Status.BAD_REQUEST).entity("Invalid filter").build();
         }
 
-        return organizationScimServer.listUsers(
+        Response response = organizationScimServer.listUsers(
             scimContext,
             scimFilter,
-            startIndex,
+            effectiveStartIndex,
             count
         );
+
+        if (oneBasedIndex) {
+            adjustUsersListStartIndex(response);
+        }
+
+        return response;
     }
 
     @GET
@@ -493,11 +523,20 @@ public class ScimResources {
         OrganizationScimContext scimContext = organizationScimServer.getScimContext(session, organizationId);
         organizationScimServer.verifyPermissions(scimContext);
 
-        return organizationScimServer.listGroups(
+        boolean oneBasedIndex = scimContext.getConfig().getStartIndexBase() == 1;
+        int effectiveStartIndex = (oneBasedIndex && startIndex > 0) ? startIndex - 1 : startIndex;
+
+        Response response = organizationScimServer.listGroups(
             scimContext,
-            startIndex,
+            effectiveStartIndex,
             count
         );
+
+        if (oneBasedIndex) {
+            adjustGroupsListStartIndex(response);
+        }
+
+        return response;
     }
 
     @GET
@@ -673,6 +712,30 @@ public class ScimResources {
         }
 
         return null;
+    }
+
+    /**
+     * Adjusts startIndex in a UsersList response entity to 1-based indexing
+     *
+     * @param response response containing a UsersList entity
+     */
+    private void adjustUsersListStartIndex(Response response) {
+        Object entity = response.getEntity();
+        if (entity instanceof UsersList usersList && usersList.getStartIndex() != null) {
+            usersList.setStartIndex(usersList.getStartIndex() + 1);
+        }
+    }
+
+    /**
+     * Adjusts startIndex in a GroupsList response entity to 1-based indexing
+     *
+     * @param response response containing a GroupsList entity
+     */
+    private void adjustGroupsListStartIndex(Response response) {
+        Object entity = response.getEntity();
+        if (entity instanceof GroupsList groupsList && groupsList.getStartIndex() != null) {
+            groupsList.setStartIndex(groupsList.getStartIndex() + 1);
+        }
     }
 
 }

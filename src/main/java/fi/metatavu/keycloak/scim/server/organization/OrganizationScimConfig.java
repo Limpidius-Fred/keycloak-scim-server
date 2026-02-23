@@ -18,6 +18,7 @@ public class OrganizationScimConfig implements ScimConfig {
     public static final String SCIM_EXTERNAL_ISSUER = "SCIM_EXTERNAL_ISSUER";
     public static final String SCIM_AUTHENTICATION_MODE = "SCIM_AUTHENTICATION_MODE";
     public static final String SCIM_EMAIL_AS_USERNAME = "SCIM_EMAIL_AS_USERNAME";
+    public static final String SCIM_OPTION_START_INDEX_BASE = "SCIM_OPTION_START_INDEX_BASE";
 
     private final OrganizationModel organization;
 
@@ -96,6 +97,12 @@ public class OrganizationScimConfig implements ScimConfig {
     @Override
     public boolean getEmailAsUsername() {
         return "true".equalsIgnoreCase(getAttribute(SCIM_EMAIL_AS_USERNAME));
+    }
+
+    @Override
+    public int getStartIndexBase() {
+        String value = getAttribute(SCIM_OPTION_START_INDEX_BASE);
+        return "1".equals(value) ? 1 : 0;
     }
 
     /**

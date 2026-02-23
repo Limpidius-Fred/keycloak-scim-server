@@ -19,6 +19,7 @@ import org.keycloak.events.admin.OperationType;
 import org.keycloak.events.admin.ResourceType;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.MemberRepresentation;
+import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.keycloak.util.JsonSerialization;
@@ -280,6 +281,56 @@ public abstract class AbstractScimTest {
             .groups()
             .group(groupId)
             .remove();
+    }
+
+    /**
+     * Sets a realm attribute
+     *
+     * @param realm realm name
+     * @param key attribute key
+     * @param value attribute value
+     */
+    protected void setRealmAttribute(String realm, String key, String value) {
+        RealmRepresentation realmRepresentation = getKeycloakContainer().getKeycloakAdminClient()
+            .realms()
+            .realm(realm)
+            .toRepresentation();
+
+        Map<String, String> attributes = realmRepresentation.getAttributes();
+        if (attributes == null) {
+            attributes = new HashMap<>();
+        }
+        attributes.put(key, value);
+        realmRepresentation.setAttributes(attributes);
+
+        getKeycloakContainer().getKeycloakAdminClient()
+            .realms()
+            .realm(realm)
+            .update(realmRepresentation);
+    }
+
+    /**
+     * Removes a realm attribute
+     *
+     * @param realm realm name
+     * @param key attribute key
+     */
+    protected void removeRealmAttribute(String realm, String key) {
+        RealmRepresentation realmRepresentation = getKeycloakContainer().getKeycloakAdminClient()
+            .realms()
+            .realm(realm)
+            .toRepresentation();
+
+        Map<String, String> attributes = realmRepresentation.getAttributes();
+        if (attributes != null) {
+            attributes.remove(key);
+            realmRepresentation.setAttributes(attributes);
+        }
+
+        getKeycloakContainer().getKeycloakAdminClient()
+            .realms()
+            .realm(realm)
+            .update(realmRepresentation);
     }
 
     /**
