@@ -570,6 +570,18 @@ public class UsersController extends AbstractController {
             }
         }
 
+        List<Map<String, String>> groups = user.getGroupsStream()
+            .map(group -> Map.of(
+                "value", group.getId(),
+                "display", group.getName(),
+                "$ref", scimContext.getServerBaseUri().resolve(String.format("Groups/%s", group.getId())).toString()
+            ))
+            .toList();
+
+        if (!groups.isEmpty()) {
+            result.putAdditionalProperty("groups", groups);
+        }
+
         return result;
     }
 
