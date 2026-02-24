@@ -18,6 +18,7 @@ import fi.metatavu.keycloak.scim.server.patch.PatchOperation;
 import fi.metatavu.keycloak.scim.server.patch.UnsupportedPatchOperation;
 import fi.metatavu.keycloak.scim.server.realm.RealmScimContext;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.UriBuilder;
 import org.jboss.logging.Logger;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.EventListenerProviderFactory;
@@ -131,7 +132,8 @@ public class UsersController extends AbstractController {
             return translateUser(
                 scimContext,
                 userAttributes,
-                userModel
+                userModel,
+                true
             );
         } catch (NotFoundException e) {
             return null;
@@ -533,6 +535,8 @@ public class UsersController extends AbstractController {
     /**
      * Translates Keycloak user to SCIM user
      *
+     * @param scimContext SCIM context
+     * @param userAttributes user attributes
      * @param user Keycloak user
      * @return SCIM user
      */
@@ -540,6 +544,24 @@ public class UsersController extends AbstractController {
             ScimContext scimContext,
             UserAttributes userAttributes,
             UserModel user
+    ) {
+        return translateUser(scimContext, userAttributes, user, false);
+    }
+
+    /**
+     * Translates Keycloak user to SCIM user
+     *
+     * @param scimContext SCIM context
+     * @param userAttributes user attributes
+     * @param user Keycloak user
+     * @param includeGroups whether to include group memberships
+     * @return SCIM user
+     */
+    protected fi.metatavu.keycloak.scim.server.model.User translateUser(
+            ScimContext scimContext,
+            UserAttributes userAttributes,
+            UserModel user,
+            boolean includeGroups
     ) {
         if (user == null) {
             return null;
@@ -567,6 +589,20 @@ public class UsersController extends AbstractController {
             Object value = userAttribute.read(user);
             if (value != null) {
                 result.putAdditionalProperty(userAttribute.getScimPath(), value);
+            }
+        }
+
+        if (includeGroups) {
+            List<Map<String, String>> groups = user.getGroupsStream()
+                .map(group -> Map.of(
+                    "value", group.getId(),
+                    "display", group.getName(),
+                    "$ref", UriBuilder.fromUri(scimContext.getServerBaseUri()).path(String.format("Groups/%s", group.getId())).build().toString()
+                ))
+                .toList();
+
+            if (!groups.isEmpty()) {
+                result.putAdditionalProperty("groups", groups);
             }
         }
 
