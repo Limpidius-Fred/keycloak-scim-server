@@ -280,7 +280,9 @@ public class RealmScimServer extends AbstractScimServer<RealmScimContext> {
             throw new NotFoundException("Realm not found");
         }
 
-        URI serverBaseUri = session.getContext().getUri().getBaseUri().resolve(String.format("realms/%s/scim/v2/", realm.getName()));
+        URI serverBaseUri = UriBuilder.fromUri(session.getContext().getUri().getBaseUri())
+            .path(String.format("realms/%s/scim/v2", realm.getName()))
+            .build();
         RealmScimConfig config = new RealmScimConfig(realm);
 
         try {

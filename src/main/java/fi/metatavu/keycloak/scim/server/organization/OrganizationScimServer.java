@@ -12,6 +12,7 @@ import fi.metatavu.keycloak.scim.server.patch.UnsupportedPatchOperation;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
 import org.jboss.logging.Logger;
 import org.keycloak.models.*;
 
@@ -249,7 +250,9 @@ public class OrganizationScimServer extends AbstractScimServer<OrganizationScimC
         KeycloakContext context = session.getContext();
         context.setOrganization(organization);
 
-        URI baseUri = session.getContext().getUri().getBaseUri().resolve(String.format("realms/%s/scim/v2/organizations/%s/", realm.getName(), organization.getId()));
+        URI baseUri = UriBuilder.fromUri(session.getContext().getUri().getBaseUri())
+            .path(String.format("realms/%s/scim/v2/organizations/%s", realm.getName(), organization.getId()))
+            .build();
         OrganizationScimConfig config = new OrganizationScimConfig(organization);
 
         try {
