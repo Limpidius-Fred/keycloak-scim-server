@@ -1,5 +1,6 @@
 package fi.metatavu.keycloak.scim.server;
 
+import jakarta.ws.rs.core.UriBuilder;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
@@ -29,7 +30,7 @@ public class AbstractController {
         result.setCreated(createdAt);
         result.setLastModified(lastModifiedAt);
         result.setResourceType(resourceType);
-        result.setLocation(scimContext.getServerBaseUri().resolve(resourcePath));
+        result.setLocation(UriBuilder.fromUri(scimContext.getServerBaseUri()).path(resourcePath).build());
         return result;
     }
 
