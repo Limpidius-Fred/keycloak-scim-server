@@ -18,6 +18,7 @@ public class RealmScimConfig implements ScimConfig {
     public static final String SCIM_EXTERNAL_SHARED_SECRET = "scim.external.shared.secret";
     public static final String SCIM_AUTHENTICATION_MODE = "scim.authentication.mode";
     public static final String SCIM_EXTERNAL_ISSUER = "scim.external.issuer";
+    public static final String SCIM_OPTION_START_INDEX_BASE = "scim.option.startIndex.base";
     private final Config config;
     private final RealmModel realm;
 
@@ -120,6 +121,13 @@ public class RealmScimConfig implements ScimConfig {
     @Override
     public boolean getEmailAsUsername() {
         return false;
+    }
+
+    @Override
+    public int getStartIndexBase() {
+        return "1".equals(
+            readRealmAttribute(SCIM_OPTION_START_INDEX_BASE).orElse("0")
+        ) ? 1 : 0;
     }
 
     /**

@@ -68,4 +68,12 @@ public interface ScimConfig {
      * @return true if email should be used as username
      */
     boolean getEmailAsUsername();
+
+    /**
+     * Returns the startIndex base (0 or 1).
+     * When 1, SCIM list responses use 1-based startIndex.
+     *
+     * @return 0 or 1, defaults to 0
+     */
+    int getStartIndexBase();
 }
