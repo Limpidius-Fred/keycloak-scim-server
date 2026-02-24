@@ -82,12 +82,14 @@ public class GroupsController extends AbstractController {
      * @param scimContext SCIM context
      * @param startIndex start index
      * @param count count
+     * @param includeMembers whether to include members in each group
      * @return groups list
      */
     public GroupsList listGroups(
             ScimContext scimContext,
             int startIndex,
-            int count
+            int count,
+            boolean includeMembers
     ) {
         KeycloakSession session = scimContext.getSession();
         RealmModel realm = scimContext.getRealm();
@@ -99,7 +101,7 @@ public class GroupsController extends AbstractController {
         List<Group> groups = allGroups.stream()
             .skip(startIndex)
             .limit(count)
-            .map(group -> translateGroup(scimContext, group))
+            .map(group -> translateGroup(scimContext, group, includeMembers))
             .collect(Collectors.toList());
 
         GroupsList result = new GroupsList();
@@ -238,6 +240,7 @@ public class GroupsController extends AbstractController {
     /**
      * Translates Keycloak group to SCIM group
      *
+     * @param scimContext SCIM context
      * @param group group
      * @return SCIM group
      */
@@ -245,21 +248,42 @@ public class GroupsController extends AbstractController {
             ScimContext scimContext,
             GroupModel group
     ) {
-        RealmModel realm = scimContext.getRealm();
-        KeycloakSession session = scimContext.getSession();
+        return translateGroup(scimContext, group, true);
+    }
 
-        List<GroupMembersInner> members = session.users().getGroupMembersStream(realm, group)
-                .map(member -> new GroupMembersInner()
-                        .value(member.getId())
-                        .display(member.getUsername())
-                )
-                .toList();
-
-        return new Group()
+    /**
+     * Translates Keycloak group to SCIM group
+     *
+     * @param scimContext SCIM context
+     * @param group group
+     * @param includeMembers whether to include members in the response
+     * @return SCIM group
+     */
+    private Group translateGroup(
+            ScimContext scimContext,
+            GroupModel group,
+            boolean includeMembers
+    ) {
+        Group result = new Group()
                 .id(group.getId())
                 .displayName(group.getName())
-                .members(members)
                 .schemas(Collections.singletonList(Schemas.GROUP_SCHEMA))
                 .meta(getMeta(scimContext, "Group", String.format("Groups/%s", group.getId())));
+
+        if (includeMembers) {
+            RealmModel realm = scimContext.getRealm();
+            KeycloakSession session = scimContext.getSession();
+
+            List<GroupMembersInner> members = session.users().getGroupMembersStream(realm, group)
+                    .map(member -> new GroupMembersInner()
+                            .value(member.getId())
+                            .display(member.getUsername())
+                    )
+                    .toList();
+
+            result.setMembers(members);
+        }
+
+        return result;
     }
 }

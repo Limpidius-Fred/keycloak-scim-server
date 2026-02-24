@@ -91,9 +91,10 @@ public interface ScimServer <T extends ScimContext> {
      * @param scimContext SCIM context
      * @param startIndex  start index
      * @param count       count
+     * @param includeMembers whether to include members in each group
      * @return response
      */
-    Response listGroups(T scimContext, int startIndex, int count);
+    Response listGroups(T scimContext, int startIndex, int count, boolean includeMembers);
 
     /**
      * Finds a group by ID
